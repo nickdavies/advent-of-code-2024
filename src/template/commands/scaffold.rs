@@ -45,7 +45,11 @@ fn safe_create_file(path: &str) -> Result<File, std::io::Error> {
 }
 
 fn create_file(path: &str) -> Result<File, std::io::Error> {
-    OpenOptions::new().write(true).create(true).open(path)
+    OpenOptions::new()
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(path)
 }
 
 pub fn handle(day: Day) {
