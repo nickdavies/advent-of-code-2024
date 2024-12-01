@@ -8,11 +8,13 @@ use crate::Day;
 
 const MODULE_TEMPLATE: &str = r#"advent_of_code::solution!(DAY_NUMBER);
 
-pub fn part_one(_input: &str) -> Result<Option<u32>, anyhow::Error> {
+use advent_of_code::template::RunType;
+
+pub fn part_one(_input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::Error> {
     Ok(None)
 }
 
-pub fn part_two(_input: &str) -> Result<Option<u32>, anyhow::Error> {
+pub fn part_two(_input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::Error> {
     Ok(None)
 }
 
@@ -23,7 +25,7 @@ mod tests {
     #[test]
     fn test_part_one() -> anyhow::Result<()> {
         let input = &advent_of_code::template::read_file_part("examples", DAY, 1);
-        let result = part_one(input)?;
+        let result = part_one(input, RunType::Example)?;
         assert_eq!(result, None);
         Ok(())
     }
@@ -31,7 +33,7 @@ mod tests {
     #[test]
     fn test_part_two() -> anyhow::Result<()> {
         let input = &advent_of_code::template::read_file_part("examples", DAY, 2);
-        let result = part_two(input)?;
+        let result = part_two(input, RunType::Example)?;
         assert_eq!(result, None);
         Ok(())
     }
