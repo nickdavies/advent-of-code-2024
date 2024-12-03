@@ -19,7 +19,7 @@ pub fn part_two(_input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow:
 }
 
 #[cfg(test)]
-mod tests {
+mod tests_day_DAY_NUMBER {
     use super::*;
 
     #[test]

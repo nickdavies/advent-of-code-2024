@@ -58,7 +58,7 @@ pub fn part_two(
 }
 
 #[cfg(test)]
-mod tests_day_01 {
+mod tests_day_1 {
     use super::*;
 
     #[test]

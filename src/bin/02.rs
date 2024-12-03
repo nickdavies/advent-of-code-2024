@@ -74,7 +74,7 @@ pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::
 }
 
 #[cfg(test)]
-mod tests_day_02 {
+mod tests_day_2 {
     use super::*;
 
     #[test]
