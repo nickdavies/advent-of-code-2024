@@ -28,23 +28,15 @@ impl Op {
     }
 }
 
-fn try_ops(
-    remaining: &mut Vec<u64>,
-    current: u64,
-    target: u64,
-    path: &mut Vec<Op>,
-    ops: &[Op],
-) -> bool {
+fn try_ops(remaining: &mut Vec<u64>, current: u64, target: u64, ops: &[Op]) -> bool {
     if current > target {
         return false;
     }
     if let Some(next) = remaining.pop() {
         for op in ops {
-            path.push(op.clone());
-            if try_ops(remaining, op.apply(current, next), target, path, ops) {
+            if try_ops(remaining, op.apply(current, next), target, ops) {
                 return true;
             }
-            path.pop().unwrap();
         }
         remaining.push(next);
         false
@@ -66,8 +58,7 @@ fn run_with_ops(input: &str, ops: &[Op]) -> Result<u64> {
             .context("failed to parse values")?;
         values.reverse();
 
-        let mut path = Vec::new();
-        if try_ops(&mut values, 0, test, &mut path, ops) {
+        if try_ops(&mut values, 0, test, ops) {
             out += test;
         }
     }
