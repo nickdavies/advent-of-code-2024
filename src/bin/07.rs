@@ -1,6 +1,7 @@
 advent_of_code::solution!(7);
 
 use advent_of_code::template::RunType;
+use aoc_lib::parse::preamble::*;
 
 use anyhow::{Context, Result};
 
@@ -46,16 +47,14 @@ fn try_ops(remaining: &mut Vec<u64>, current: u64, target: u64, ops: &[Op]) -> b
 }
 
 fn run_with_ops(input: &str, ops: &[Op]) -> Result<u64> {
+    let data: Vec<(u64, Vec<u64>)> = parse_input(
+        LineSplitter,
+        ParseTuple2(ParseFromStr, SplitDelim(ParseFromStr, " "), ": "),
+        input,
+    )
+    .context("failed to parse input")?;
     let mut out = 0;
-    for line in input.lines() {
-        let (test, values) = line.split_once(":").context("failed to split line")?;
-        let test: u64 = test.parse().context("failed to parse test value")?;
-        let mut values: Vec<u64> = values
-            .trim()
-            .split(" ")
-            .map(|s| s.parse())
-            .collect::<Result<Vec<u64>, _>>()
-            .context("failed to parse values")?;
+    for (test, mut values) in data {
         values.reverse();
 
         if try_ops(&mut values, 0, test, ops) {
