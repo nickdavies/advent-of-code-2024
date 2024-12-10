@@ -4,20 +4,8 @@ use advent_of_code::template::RunType;
 
 use aoc_lib::grid::{Direction, Location, Map};
 
-use anyhow::{Context, Result};
+use anyhow::{anyhow, Result};
 use std::collections::BTreeSet;
-
-pub fn parse(input: &str) -> Result<Map<u32>> {
-    let mut out = Vec::new();
-    for line in input.lines() {
-        let mut out_line = Vec::new();
-        for char in line.chars() {
-            out_line.push(char.to_digit(10).context("failed to parse digit")?);
-        }
-        out.push(out_line);
-    }
-    Ok(Map(out))
-}
 
 pub fn hike_trail(map: &Map<u32>, current: &Location, seen: &mut BTreeSet<Location>) -> u32 {
     let current_value = map.get(current);
@@ -36,24 +24,11 @@ pub fn hike_trail(map: &Map<u32>, current: &Location, seen: &mut BTreeSet<Locati
     }
     rating
 }
-pub fn part_one(input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::Error> {
-    let map: Map<u32> = parse(input)?;
 
-    let mut out = 0;
-    for row in map.iter() {
-        for (loc, v) in row {
-            if *v == 0 {
-                let mut seen = BTreeSet::new();
-                hike_trail(&map, &loc, &mut seen);
-                out += seen.len() as u32;
-            }
-        }
-    }
-    Ok(Some(out))
-}
-
-pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::Error> {
-    let map: Map<u32> = parse(input)?;
+fn run(input: &str, count_fn: fn(u32, BTreeSet<Location>) -> u32) -> Result<u32> {
+    let map: Map<u32> = Map::parse(input, |c| {
+        c.to_digit(10).ok_or(anyhow!("Failed to parse digit"))
+    })?;
 
     let mut out = 0;
     for row in map.iter() {
@@ -61,11 +36,20 @@ pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::
             if *v == 0 {
                 let mut seen = BTreeSet::new();
                 let score = hike_trail(&map, &loc, &mut seen);
-                out += score;
+                out += count_fn(score, seen);
             }
         }
     }
-    Ok(Some(out))
+
+    Ok(out)
+}
+
+pub fn part_one(input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::Error> {
+    Ok(Some(run(input, |_, seen| seen.len() as u32)?))
+}
+
+pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u32>, anyhow::Error> {
+    Ok(Some(run(input, |c, _| c)?))
 }
 
 #[cfg(test)]
