@@ -98,7 +98,7 @@ mod tests_day_11 {
 
     #[test]
     fn test_part_two() -> anyhow::Result<()> {
-        let expected = None;
+        let expected = Some(65601038650482);
         let input = &advent_of_code::template::read_file_part("examples", DAY, 2);
         assert!(expected.is_none() || !input.is_empty(), "example 2 empty!");
         let result = part_two(input, RunType::Example)?;
