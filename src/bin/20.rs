@@ -4,65 +4,6 @@ use advent_of_code::template::RunType;
 use aoc_lib::grid::{Direction, Location, Map};
 
 use anyhow::{anyhow, Context, Result};
-use std::cmp::Reverse;
-use std::collections::BinaryHeap;
-
-fn shortest_path(
-    map: &Map<Option<usize>>,
-    current: &Location,
-    end: &Location,
-    shortest: &mut Vec<Location>,
-) -> Result<bool> {
-    shortest.push(current.clone());
-    if current == end {
-        return Ok(true);
-    }
-    let cost = map
-        .get(current)
-        .context(format!("Expected to find: {:?}", current))?;
-
-    for direction in Direction::all() {
-        if let Some(next) = map.go_direction(current, direction) {
-            if let Some(next_cost) = map.get(&next) {
-                if *next_cost == cost - 1 {
-                    return shortest_path(map, &next, end, shortest);
-                }
-            }
-        }
-    }
-
-    unreachable!();
-}
-
-fn seek(map: &Map<bool>, start: &Location, end: &Location) -> Map<Option<usize>> {
-    let mut to_visit = BinaryHeap::new();
-    to_visit.push((Reverse(0), 0, end.clone()));
-
-    let mut seen = map.transform(|_, _| None);
-
-    while !to_visit.is_empty() {
-        let (_, dist, current) = to_visit.pop().unwrap();
-        if let Some(existing_dist) = seen.get(&current) {
-            if existing_dist <= &dist {
-                continue;
-            }
-        }
-        *seen.get_mut(&current) = Some(dist);
-        if &current == start {
-            break;
-        }
-
-        for direction in Direction::all() {
-            if let Some(next) = map.go_direction(&current, direction) {
-                if !map.get(&next) {
-                    to_visit.push((Reverse(dist), dist + 1, next.clone()))
-                }
-            }
-        }
-    }
-
-    seen
-}
 
 #[derive(Debug, Clone, PartialEq)]
 enum Tile {
@@ -99,10 +40,42 @@ impl TryFrom<char> for Tile {
     }
 }
 
-fn find_cheats(locations: &[Location], save_target: usize, cheat_dist: usize) -> usize {
+fn build_path(map: &Map<Tile>) -> Result<Vec<Location>> {
+    let start = map
+        .find(|(_, t)| *t == &Tile::Start)
+        .context("failed to find start")?;
+
+    let mut path = Vec::new();
+    let mut prev = None;
+    let mut current = start.clone();
+    loop {
+        path.push(current.clone());
+        if let Tile::End = map.get(&current) {
+            break;
+        }
+        for direction in Direction::all() {
+            if let Some(next) = map.go_direction(&current, direction) {
+                if Some(&next) == prev.as_ref() {
+                    continue;
+                }
+
+                if !map.get(&next).can_enter() {
+                    continue;
+                }
+
+                prev = Some(current);
+                current = next;
+                break;
+            }
+        }
+    }
+    Ok(path)
+}
+
+fn find_cheats(path: &[Location], save_target: usize, cheat_dist: usize) -> usize {
     let mut cheats = 0;
-    for (start_idx, start) in locations.iter().enumerate() {
-        for (end_idx, end) in locations.iter().enumerate().skip(start_idx + save_target) {
+    for (start_idx, start) in path.iter().enumerate() {
+        for (end_idx, end) in path.iter().enumerate().skip(start_idx + save_target) {
             let noclip = start.manhattan_dist(end);
             let normal = end_idx - start_idx;
             if noclip >= normal {
@@ -117,42 +90,27 @@ fn find_cheats(locations: &[Location], save_target: usize, cheat_dist: usize) ->
     cheats
 }
 
-fn parse(input: &str) -> Result<Vec<Location>> {
-    let map: Map<Tile> = Map::try_from(input).context("Failed to parse input")?;
-    let start = map
-        .find(|(_, t)| *t == &Tile::Start)
-        .context("failed to find start")?;
-    let end = map
-        .find(|(_, t)| *t == &Tile::End)
-        .context("failed to find end")?;
-    let map: Map<bool> = map.transform(|_, c| !c.can_enter());
-
-    let cost_map = seek(&map, &start, &end);
-    let mut shortest = Vec::new();
-    shortest_path(&cost_map, &start, &end, &mut shortest)
-        .context("expected to find route to exist")?;
-    Ok(shortest)
-}
-
 pub fn part_one(input: &str, run_type: RunType) -> Result<Option<usize>, anyhow::Error> {
-    let locations = parse(input)?;
+    let map: Map<Tile> = Map::try_from(input).context("Failed to parse input")?;
+    let path = build_path(&map).context("failed to buidl path")?;
     let save_target = match run_type {
         RunType::Real => 100,
         RunType::Example => 12,
     };
 
-    let cheats = find_cheats(&locations, save_target, 2);
+    let cheats = find_cheats(&path, save_target, 2);
     Ok(Some(cheats))
 }
 
 pub fn part_two(input: &str, run_type: RunType) -> Result<Option<usize>, anyhow::Error> {
-    let locations = parse(input)?;
+    let map: Map<Tile> = Map::try_from(input).context("Failed to parse input")?;
+    let path = build_path(&map).context("failed to buidl path")?;
     let save_target = match run_type {
         RunType::Real => 100,
         RunType::Example => 50,
     };
 
-    let cheats = find_cheats(&locations, save_target, 20);
+    let cheats = find_cheats(&path, save_target, 20);
     Ok(Some(cheats))
 }
 
