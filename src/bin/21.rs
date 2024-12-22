@@ -1,14 +1,13 @@
-#![allow(unused_imports)]
 advent_of_code::solution!(21);
 
 use advent_of_code::template::RunType;
 
-use aoc_lib::grid::{CountingMap, Direction, Location, Map};
+use aoc_lib::grid::Location;
 use aoc_lib::parse::preamble::*;
 
 use anyhow::{anyhow, Context, Result};
 use itertools::Itertools;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap, VecDeque};
+use std::collections::BTreeMap;
 
 trait ToLocation {
     fn start() -> Self;
