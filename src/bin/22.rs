@@ -3,7 +3,7 @@ advent_of_code::solution!(22);
 use advent_of_code::template::RunType;
 
 use anyhow::{Context, Result};
-use std::collections::{BTreeMap, BTreeSet, VecDeque};
+use std::collections::VecDeque;
 
 struct SecretGen {
     secret: u64,
@@ -43,6 +43,31 @@ pub fn part_one(input: &str, _run_type: RunType) -> Result<Option<u64>, anyhow::
     Ok(Some(out))
 }
 
+const MAX_NUMBERS: usize = 2000;
+
+#[derive(Debug)]
+struct ComboCache {
+    total: u64,
+    prices: [Option<u64>; MAX_NUMBERS],
+}
+
+impl ComboCache {
+    fn new() -> Self {
+        Self {
+            total: 0,
+            prices: [None; MAX_NUMBERS],
+        }
+    }
+
+    fn add(&mut self, number: usize, price: u64) -> u64 {
+        if self.prices[number].is_none() {
+            self.prices[number] = Some(price);
+            self.total += price;
+        }
+        self.total
+    }
+}
+
 pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u64>, anyhow::Error> {
     let numbers: Vec<u64> = input
         .lines()
@@ -50,13 +75,30 @@ pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u64>, anyhow::
         .collect::<Result<Vec<u64>, std::num::ParseIntError>>()
         .context("failed to parse input")?;
 
-    let mut data = Vec::new();
-    for number in numbers {
-        let mut price_lookup: BTreeMap<Vec<i64>, u64> = BTreeMap::new();
-        let mut prices: Vec<(u64, Vec<i64>)> = Vec::new();
+    let mut cache_table: Vec<Vec<Vec<Vec<ComboCache>>>> = Vec::with_capacity(20);
+    for _ in 0..20 {
+        let mut l1 = Vec::with_capacity(20);
+        for _ in 0..20 {
+            let mut l2 = Vec::with_capacity(20);
+            for _ in 0..20 {
+                let mut l3 = Vec::with_capacity(20);
+                for _ in 0..20 {
+                    l3.push(ComboCache::new());
+                }
+                l2.push(l3);
+            }
+            l1.push(l2);
+        }
+        cache_table.push(l1);
+    }
+    // You can replace this monstrosity with below. It's slowe but doesn't depend on
+    // the exact AoC problem details as much.
+    // let mut cache: BTreeMap<Vec<u64>, ComboCache> = BTreeMap::new();
+    let mut best: Option<u64> = None;
+    for (number_id, number) in numbers.iter().enumerate() {
         let mut deltas = VecDeque::new();
-        let secrets = SecretGen::new(number).take(2000);
-        let mut prev: i64 = number as i64 % 10;
+        let secrets = SecretGen::new(*number).take(2000);
+        let mut prev: i64 = *number as i64 % 10;
         for secret in secrets {
             let price = secret % 10;
             deltas.push_back(prev - price as i64);
@@ -65,50 +107,21 @@ pub fn part_two(input: &str, _run_type: RunType) -> Result<Option<u64>, anyhow::
                 0..=4 => continue,
                 5 => {
                     deltas.pop_front();
-                    let delta_vec: Vec<i64> = deltas.iter().cloned().collect();
-                    if price_lookup.contains_key(&delta_vec) {
-                        continue;
-                    }
-                    price_lookup.insert(delta_vec.clone(), price);
-                    prices.push((price, delta_vec));
+                    let mut delta_iter = deltas.iter();
+                    let cache_entry = &mut cache_table[(*delta_iter.next().unwrap() + 10) as usize]
+                        [(*delta_iter.next().unwrap() + 10) as usize]
+                        [(*delta_iter.next().unwrap() + 10) as usize]
+                        [(*delta_iter.next().unwrap() + 10) as usize];
+
+                    let combo_price = cache_entry.add(number_id, price);
+                    best = Some(std::cmp::max(best.unwrap_or(combo_price), combo_price));
                 }
                 _ => unreachable!(),
             }
         }
-        prices.sort_by_key(|v| std::cmp::Reverse(v.0));
-        data.push((prices, price_lookup));
     }
 
-    let mut seen: BTreeSet<Vec<i64>> = BTreeSet::new();
-    let mut best: Option<u64> = None;
-    let mut best_seq: Option<Vec<i64>> = None;
-    for (current, (prices, _)) in data.iter().enumerate() {
-        println!("Checking: {}", current);
-        for (current_price, delta) in prices {
-            if seen.contains(delta) {
-                continue;
-            }
-            let mut total = *current_price;
-            for (other, (_, price_lookup)) in data.iter().enumerate() {
-                if current == other {
-                    continue;
-                }
-                if let Some(other_price) = price_lookup.get(delta) {
-                    total += other_price;
-                }
-            }
-            if best.unwrap_or(total) <= total {
-                best = Some(total);
-                best_seq = Some(delta.clone());
-            }
-            seen.insert(delta.clone());
-        }
-    }
-
-    let best = best.unwrap();
-    let best_seq = best_seq.unwrap();
-    println!("{} {:?}", best, best_seq);
-    Ok(Some(best))
+    Ok(Some(best.unwrap()))
 }
 
 #[cfg(test)]
