@@ -1,14 +1,12 @@
-#![allow(unused_imports)]
 advent_of_code::solution!(16);
 
 use advent_of_code::template::RunType;
 
-use aoc_lib::grid::{CountingMap, Direction, Location, Map};
-use aoc_lib::parse::preamble::*;
+use aoc_lib::grid::{Direction, Location, Map};
 
 use anyhow::{anyhow, Context, Result};
 use core::cmp::Reverse;
-use std::collections::{BTreeMap, BTreeSet, BinaryHeap};
+use std::collections::{BTreeSet, BinaryHeap};
 
 #[derive(Debug, Clone, PartialEq)]
 enum Tile {

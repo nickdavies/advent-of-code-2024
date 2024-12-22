@@ -1,9 +1,8 @@
-#![allow(unused_imports)]
 advent_of_code::solution!(19);
 
 use advent_of_code::template::RunType;
-use anyhow::{anyhow, Context, Result};
-use std::collections::{BTreeMap, BTreeSet};
+use anyhow::{Context, Result};
+use std::collections::BTreeMap;
 
 fn make_towel<'a>(
     target: &'a str,
